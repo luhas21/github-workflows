@@ -111,7 +111,7 @@ jobs:
 
           : "${UPDATES_SSH_HOST:?UPDATES_SSH_HOST is required}"
           : "${UPDATES_SSH_USER:?UPDATES_SSH_USER is required}"
-          : "${UPDATES_SSH_BASE_PATH:?UPDATES_SSH_BASE_PATH is required}"
+          : "${UPDATES_SSH_PATH:?UPDATES_SSH_PATH is required}"
 
           echo "THEME_SLUG=$THEME_SLUG" >> "$GITHUB_ENV"
           echo "THEME_FOLDER=$THEME_FOLDER" >> "$GITHUB_ENV"
@@ -124,7 +124,7 @@ jobs:
 
           echo "UPDATES_SSH_HOST=$UPDATES_SSH_HOST" >> "$GITHUB_ENV"
           echo "UPDATES_SSH_USER=$UPDATES_SSH_USER" >> "$GITHUB_ENV"
-          echo "UPDATES_SSH_BASE_PATH=$UPDATES_SSH_BASE_PATH" >> "$GITHUB_ENV"
+          echo "UPDATES_SSH_PATH=$UPDATES_SSH_PATH" >> "$GITHUB_ENV"
 
           echo "REQUIRES_WP=${REQUIRES_WP:-}" >> "$GITHUB_ENV"
           echo "TESTED_WP=${TESTED_WP:-}" >> "$GITHUB_ENV"
@@ -230,15 +230,13 @@ jobs:
         run: |
           ssh-keyscan -H "$UPDATES_SSH_HOST" >> ~/.ssh/known_hosts
 
-      - name: Upload update.json and ZIP to updates server
+      - name: Upload update.json to server
         if: env.SKIP_RELEASE != 'true'
-        run: |
-          REMOTE_DIR="${UPDATES_SSH_BASE_PATH}/${UPDATES_PATH}"
+        run: scp update.json "${UPDATES_SSH_USER}@${UPDATES_SSH_HOST}:${UPDATES_SSH_PATH}/"
 
-          ssh "${UPDATES_SSH_USER}@${UPDATES_SSH_HOST}" "mkdir -p '${REMOTE_DIR}'"
-
-          scp update.json "${UPDATES_SSH_USER}@${UPDATES_SSH_HOST}:${REMOTE_DIR}/update.json"
-          scp "${ZIP_NAME}" "${UPDATES_SSH_USER}@${UPDATES_SSH_HOST}:${REMOTE_DIR}/${ZIP_NAME}"
+      - name: Copy ZIP to updates server
+        if: env.SKIP_RELEASE != 'true'
+        run: scp "${ZIP_NAME}" "${UPDATES_SSH_USER}@${UPDATES_SSH_HOST}:${UPDATES_SSH_PATH}/"
 
       - name: Commit and push version bump
         if: env.SKIP_RELEASE != 'true'
