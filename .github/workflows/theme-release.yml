@@ -84,6 +84,19 @@ jobs:
         if: hashFiles('package-lock.json') != ''
         run: npm run build
 
+      - name: Verify built CSS exists
+        if: hashFiles('package-lock.json') != ''
+        run: |
+          if [ ! -f resources/css/styles.css ]; then
+            echo "Build did not create resources/css/styles.css"
+            echo "Current resources tree:"
+            find resources -maxdepth 4 -type f | sort || true
+            exit 1
+          fi
+
+          echo "Built CSS found:"
+          ls -lah resources/css
+
       - name: Set temporary stage version for cache busting
         run: |
           CURRENT_VERSION=$(grep -m1 '^Version:' "$THEME_MAIN_FILE" | sed -E 's/^Version:[[:space:]]*//')
@@ -204,6 +217,19 @@ jobs:
       - name: Build assets
         if: hashFiles('package-lock.json') != ''
         run: npm run build
+
+      - name: Verify built CSS exists
+        if: hashFiles('package-lock.json') != ''
+        run: |
+          if [ ! -f resources/css/styles.css ]; then
+            echo "Build did not create resources/css/styles.css"
+            echo "Current resources tree:"
+            find resources -maxdepth 4 -type f | sort || true
+            exit 1
+          fi
+
+          echo "Built CSS found:"
+          ls -lah resources/css
 
       - name: Get current version
         run: |
@@ -372,6 +398,19 @@ jobs:
       - name: Build assets
         if: env.SKIP_RELEASE != 'true' && hashFiles('package-lock.json') != ''
         run: npm run build
+
+      - name: Verify built CSS exists
+        if: env.SKIP_RELEASE != 'true' && hashFiles('package-lock.json') != ''
+        run: |
+          if [ ! -f resources/css/styles.css ]; then
+            echo "Build did not create resources/css/styles.css"
+            echo "Current resources tree:"
+            find resources -maxdepth 4 -type f | sort || true
+            exit 1
+          fi
+
+          echo "Built CSS found:"
+          ls -lah resources/css
 
       - name: Build release ZIP
         if: env.SKIP_RELEASE != 'true'
