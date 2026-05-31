@@ -178,6 +178,33 @@ jobs:
           echo "THEME_FOLDER=$THEME_FOLDER" >> "$GITHUB_ENV"
           echo "THEME_MAIN_FILE=$THEME_MAIN_FILE" >> "$GITHUB_ENV"
 
+      - name: Setup Node.js
+        if: hashFiles('package-lock.json') != ''
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20.18.3'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: hashFiles('package-lock.json') != ''
+        run: npm ci --include=optional
+
+      - name: Install parcel watcher for Linux fallback
+        if: hashFiles('package-lock.json') != ''
+        run: |
+          if ! node -e "require('@parcel/watcher')" 2>/dev/null; then
+            npm install --no-save @parcel/watcher-linux-x64-glibc@2.5.6
+          fi
+
+      - name: Verify parcel watcher loads
+        if: hashFiles('package-lock.json') != ''
+        run: |
+          node -e "require('@parcel/watcher'); console.log('parcel watcher ok')"
+
+      - name: Build assets
+        if: hashFiles('package-lock.json') != ''
+        run: npm run build
+
       - name: Get current version
         run: |
           CURRENT_VERSION=$(grep -m1 '^Version:' "$THEME_MAIN_FILE" | grep -oP '\d+\.\d+\.\d+')
@@ -207,6 +234,14 @@ jobs:
             --exclude='.github/' \
             --exclude='node_modules/' \
             --exclude='vendor/' \
+            --exclude='bs-config.js' \
+            --exclude='.env' \
+            --exclude='deploy.config' \
+            --exclude='package*.json' \
+            --exclude='tailwind.config.js' \
+            --exclude='postcss.config.js' \
+            --exclude='resources/src/' \
+            --exclude='resources/scss/' \
             --exclude='.gitignore' \
             --exclude='AGENTS.md' \
             --exclude='README.md' \
@@ -311,6 +346,33 @@ jobs:
         run: |
           sed -i "s/^Version: .*/Version: ${NEW_VERSION}/" "$THEME_MAIN_FILE"
 
+      - name: Setup Node.js
+        if: env.SKIP_RELEASE != 'true' && hashFiles('package-lock.json') != ''
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20.18.3'
+          cache: 'npm'
+
+      - name: Install dependencies
+        if: env.SKIP_RELEASE != 'true' && hashFiles('package-lock.json') != ''
+        run: npm ci --include=optional
+
+      - name: Install parcel watcher for Linux fallback
+        if: env.SKIP_RELEASE != 'true' && hashFiles('package-lock.json') != ''
+        run: |
+          if ! node -e "require('@parcel/watcher')" 2>/dev/null; then
+            npm install --no-save @parcel/watcher-linux-x64-glibc@2.5.6
+          fi
+
+      - name: Verify parcel watcher loads
+        if: env.SKIP_RELEASE != 'true' && hashFiles('package-lock.json') != ''
+        run: |
+          node -e "require('@parcel/watcher'); console.log('parcel watcher ok')"
+
+      - name: Build assets
+        if: env.SKIP_RELEASE != 'true' && hashFiles('package-lock.json') != ''
+        run: npm run build
+
       - name: Build release ZIP
         if: env.SKIP_RELEASE != 'true'
         run: |
@@ -324,6 +386,14 @@ jobs:
             --exclude='.github/' \
             --exclude='node_modules/' \
             --exclude='vendor/' \
+            --exclude='bs-config.js' \
+            --exclude='.env' \
+            --exclude='deploy.config' \
+            --exclude='package*.json' \
+            --exclude='tailwind.config.js' \
+            --exclude='postcss.config.js' \
+            --exclude='resources/src/' \
+            --exclude='resources/scss/' \
             --exclude='.gitignore' \
             --exclude='AGENTS.md' \
             --exclude='README.md' \
